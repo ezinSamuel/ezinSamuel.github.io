@@ -6,62 +6,7 @@
     <title>Document</title>
 </head>
 <body>
-    
+    hello
 </body>
 </html>
 
-from PIL import Image
-import numpy as np
-from collections import deque
-
-# Load the image and ensure it's in RGB mode
-input_path = "/mnt/data/button_comparison.jpeg"
-image = Image.open(input_path).convert("RGB")
-data = np.array(image)
-height, width, _ = data.shape
-
-# Create a boolean mask (False = not background, True = background)
-mask = np.zeros((height, width), dtype=bool)
-
-# Define a threshold for “black.” Adjust if needed.
-threshold = 30
-def is_black(pixel):
-    return (pixel[0] < threshold) and (pixel[1] < threshold) and (pixel[2] < threshold)
-
-# Use flood fill from the borders to mark background pixels
-queue = deque()
-
-# Add all border pixels that are black to the queue
-for x in range(width):
-    if is_black(data[0, x]):
-        mask[0, x] = True
-        queue.append((0, x))
-    if is_black(data[height-1, x]):
-        mask[height-1, x] = True
-        queue.append((height-1, x))
-for y in range(height):
-    if is_black(data[y, 0]):
-        mask[y, 0] = True
-        queue.append((y, 0))
-    if is_black(data[y, width-1]):
-        mask[y, width-1] = True
-        queue.append((y, width-1))
-
-# Flood fill: check the 4-connected neighbors
-while queue:
-    y, x = queue.popleft()
-    for dy, dx in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
-        ny, nx = y + dy, x + dx
-        if 0 <= ny < height and 0 <= nx < width and not mask[ny, nx]:
-            if is_black(data[ny, nx]):
-                mask[ny, nx] = True
-                queue.append((ny, nx))
-
-# Replace background pixels (as defined in mask) with white
-data[mask] = [255, 255, 255]
-
-# Save the updated image
-output_path = "/mnt/data/button_comparison_bg_white.jpeg"
-new_image = Image.fromarray(data)
-new_image.save(output_path)
-print("Saved updated image as", output_path)
